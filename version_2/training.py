@@ -8,7 +8,7 @@ from agent import QLearningAgent
 np.set_printoptions(precision=1, suppress=True)
 
 def train():
-    grid_size = 15
+    grid_size = 25
     env = Map(size=grid_size)
 
     # State size is position_state * stick_state * agent_hp * zombie_hp

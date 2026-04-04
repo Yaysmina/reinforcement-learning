@@ -34,6 +34,9 @@ class Map:
         self.max_y = size - 1
         self.logging = logging
 
+        # Store if the agent got the stick reward
+        self.recieved_stick_reward = False
+
         # Define the state size
         self.num_positions = self.size * self.size
         self.num_stick_states = 2 # False or True
@@ -131,7 +134,14 @@ class Map:
         # Positive reward if the zombie dies
         zombie_dies_reward = 10 if self.zombie_hp <= 0 else 0
 
-        total_reward = time_penalty + agent_dies_reward + zombie_dies_reward
+        # Positive reward if the agent gets the stick
+        if self.has_stick and not self.recieved_stick_reward:
+            got_stick_reward = 5
+            self.recieved_stick_reward = True
+        else:
+            got_stick_reward = 0
+
+        total_reward = time_penalty + got_stick_reward + agent_dies_reward + zombie_dies_reward
 
         if self.logging:
             print(f"Agent got reward {total_reward}\n")
