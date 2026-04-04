@@ -1,7 +1,7 @@
 from game import Map, Action
 
 def play_game():
-    env = Map(size=5, logging=False)
+    env = Map(size=9, logging=False)
     env.reset()
     
     command_mapping = {
