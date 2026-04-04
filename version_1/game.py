@@ -39,7 +39,7 @@ class Map():
         # We need a temporary grid to make sure we don't place walls 
         # where the agent or resource starts.
         temp_grid = np.zeros((self.size, self.size))
-        agent_start = [self.size // 2, self.size // 2]
+        agent_start = [0, 0]
         resource_start = [self.size - 1, self.size - 1]
         
         placed_walls = 0
@@ -98,12 +98,12 @@ class Map():
     
     def get_reward(self):
         # Small penatly for taking an action
-        time_penalty = -0.01
+        time_penalty = -0.1
         position_reward = 0
 
         # Reward the agent for finding a resource
         if self.is_next_to(self.RESOURCE):
-            position_reward = 1
+            position_reward = 10
         
         # Calculate the total reward
         total_reward = time_penalty + position_reward
@@ -133,6 +133,6 @@ class Map():
         self.grid[self.resource_pos[0], self.resource_pos[1]] = self.RESOURCE
 
         # Initialize the agent
-        # self.agent_pos = np.array([self.size // 2, self.size // 2])
-        self.agent_pos = np.array([0, 0])
+        self.agent_pos = np.array([self.size // 2, self.size // 2])
+        # self.agent_pos = np.array([0, 0])
         self.grid[self.agent_pos[0], self.agent_pos[1]] = self.AGENT

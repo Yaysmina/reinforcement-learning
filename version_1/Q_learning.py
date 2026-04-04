@@ -25,9 +25,10 @@ class Q_learning_agent:
         action = self.get_action(state)
         reward = self.map.take_action(action)
         new_state = self.map.get_state()
+        is_terminal = self.map.is_terminal_state() 
         
         if not testing:
-            self.update_q_table(state, action, reward, new_state)
+            self.update_q_table(state, action, reward, new_state, is_terminal)
     
     def update_q_table(self, state, action, reward, new_state, is_terminal):
         old_S_A_value = self.q_table[state, action]

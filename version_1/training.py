@@ -8,39 +8,53 @@ np.set_printoptions(precision=1, suppress=True)
 
 def plot_value_table(agent):
     table = agent.get_value_table()
+    size = agent.map.size
     
-    plt.figure(figsize=(10, 8))
+    fig, ax = plt.subplots(figsize=(10, 8))
     
-    # cmap='RdYlGn' provides the Red -> Yellow -> Green gradient
-    # vmin/vmax ensures 0 is pure red and 1 is pure green
-    im = plt.imshow(table, cmap='RdYlGn', vmin=0, vmax=1)
+    # Display the heatmap
+    im = plt.imshow(table, cmap='RdYlGn', vmin=-2, vmax=10)
     
-    # Add a color bar on the side
+    # Add a color bar
     plt.colorbar(im)
     
-    # Optional: Add the actual numbers inside the squares
-    for i in range(agent.map.size):
-        for j in range(agent.map.size):
-            val = round(table[i, j], 2)
-            # Use white text for very red/green blocks and black for yellow for readability
-            color = "white" if abs(val - 0.5) > 0.3 else "black"
-            plt.text(j, i, val, ha="center", va="center", color=color, fontsize=8)
+    # 1. Remove the axis ticks and labels (the numbers on the side)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    
+    # 2. Add grid lines
+    # We set minor ticks at the halfway points (-0.5, 0.5, 1.5...) to draw lines BETWEEN cells
+    ax.set_xticks(np.arange(-.5, size, 1), minor=True)
+    ax.set_yticks(np.arange(-.5, size, 1), minor=True)
+    
+    # Style the grid lines (white, solid, slightly thick)
+    # ax.grid(which='minor', color='white', linestyle='-', linewidth=0.5)
+    
+    # Hide the "minor" tick marks themselves so only the grid remains
+    ax.tick_params(which="minor", bottom=False, left=False)
 
     plt.title("Agent Value Table (Heatmap)")
     plt.show()
 
+
+
+
 # ----- Setup -----
 
-map = Map(size = 15, walls = 50)
+map = Map(size = 50) # <---------- CHANGE MAP SIZE HERE ----------
 agent = Q_learning_agent(
     map,
     alpha = 0.2,
-    gamma = 0.95,
+    gamma = 0.98,
     epsilon = 0.9,
     )
-episodes = 1000
-update_freq = episodes / 10
-min_epsilon = 0.20
+
+# update_freq = episodes / 100
+update_list = [25, 50, 100, 200, 300, 400, 600, 800, 1000, 1500, 2000, 3000, 4000, 6000, 8000, 10000, 12500,
+               15000, 20000, 25000, 30000, 35000, 40000, 50000, 60000, 70000, 80000, 90000, 100000]
+episodes = 100000
+
+min_epsilon = 0.10
 
 agent.epsilon_decay = -log(min_epsilon / agent.epsilon) / episodes
 
@@ -73,27 +87,28 @@ for episode in range(1, episodes + 1):
         
     agent.update_epsilon()
 
-    if episode % update_freq == 0:
+    if episode in update_list:
         print("Episode", episode, "completed")
         print("Current Epsilon", round(agent.epsilon, 2))
         print("Current value table \n", agent.get_value_table(), "\n")
 
+plot_value_table(agent)
 
-# ----- Agent Plays -----
+# # ----- Agent Plays -----
 
-agent.epsilon /= 10
-map.logging = True
-map.reset()
-step_count = 0
+# agent.epsilon = 0
+# map.logging = True
+# map.reset()
+# step_count = 0
 
-print("\n" * 2)
-print("---------- Agent plays ----------")
-print("\n" * 2)
-print("Starting state")
-print(map.grid)
-print()
-print("----------------------")
-print()
+# print("\n" * 2)
+# print("---------- Agent plays ----------")
+# print("\n" * 2)
+# print("Starting state")
+# print(map.grid)
+# print()
+# print("----------------------")
+# print()
 
 # state = map.get_state()
 # while not map.is_terminal_state():
@@ -105,4 +120,4 @@ print()
 # print("Agent finished in", step_count, "steps")
 # print("")
 # print("Final Value Table")
-plot_value_table(agent)
+# plot_value_table(agent)
