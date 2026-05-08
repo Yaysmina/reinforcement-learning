@@ -1,5 +1,7 @@
 # GridMuck RL - Version 3
 
+## !! Every file in version 3 is currently a copy of version 2 !!
+
 **Version 3: Introducing Neural Networks**
 
 This directory contains the second version of **GridMuck**, in which I made the game logic and state space more complexed. The goal of this version is to see if the same reinforcement learning algorithm from the previous version is able to deal with a complexer state space. The result is a definite YES!
@@ -7,7 +9,7 @@ This directory contains the second version of **GridMuck**, in which I made the 
 ## The V2 Game
 In the second version of GridMuck, the goal of the game is now to defeat a zombie.
 Both the agent and the zombie start with 2 HP.
-When the agent moves next to the zombie, the zombie will deal when Damage.
+When the agent moves next to the zombie, the zombie will deal 1 Damage.
 When standing next to a zombie and doing the "ATTACK" action, the agent will deal 1 Damage.
 The point is that the agent cannot defeat the zombie like this, because the zombie attacks after the agent ends up next to it, dealing the first punch.
 This results in the agent dying before it can kill the zombie, losing the game.
@@ -24,6 +26,40 @@ With this stick the agent now deals 2 Damage to the zombie and is thus able to b
 ## The RL Approach
 
 The same as before, the agent was able to successfully complete the game as fast as possible even with a 15x15 grid. It found that it needs to go to the tree, attack it, go to the zombie, attack it.
+
+## Visualization (Pygame)
+
+Version 3 includes an optional pygame-based visualization that can be toggled on/off during gameplay.
+
+### Features
+* **Separated from game logic:** The visualization is completely separate from the game logic in `visualization.py`
+* **Toggle on/off:** Press 'v' during gameplay to toggle visualization
+* **Performance-friendly:** Visualization is disabled by default and not used during training to avoid wasting performance
+* **Real-time display:** Shows the grid, agent, zombie, tree, HP values, and stick status
+
+### Requirements
+Install pygame for visualization support:
+```bash
+pip install pygame
+```
+
+Or install all requirements:
+```bash
+cd version_3
+pip install -r requirements.txt
+```
+
+### Usage
+Run the game with manual play:
+```bash
+python play.py
+```
+
+During gameplay:
+- Use movement commands (up/down/left/right or z/q/s/d)
+- Use 'a' or 'attack' to attack
+- Press 'v' to toggle visualization on/off
+- Press 'x' or 'exit' to quit
 
 ## Looking Forward (Context for V3)
 
@@ -43,3 +79,5 @@ In **Version 3**, the game will be an actual playable game, with a different spa
 * `agent.py`: The purely tabular Q-Learning algorithm.
 * `train.py`: The script to train the agent and see testing performance stats.
 * `play.py`: A script to manually play the game yourself.
+* `visualization.py`: Optional pygame-based visualization (separated from game logic).
+* `requirements.txt`: Python package dependencies.
