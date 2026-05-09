@@ -31,7 +31,7 @@ KEY_TO_ACTION = {
 }
 
 class Visualization:
-    def __init__(self, cell_size: int = 80):
+    def __init__(self, cell_size: int = 40):
         self.cell_size = cell_size
         self.visible = False
         self.running = True

@@ -3,7 +3,7 @@ version_2:
   replay_memory_size: 10000
   mini_batch_size: 32
   epsilon_init: 1.0
-  epsilon_decay: 0.9998
+  epsilon_decay: 0.99995
   epsilon_min: 0.02
   network_sync_rate: 10
   learning_rate: 0.0001
