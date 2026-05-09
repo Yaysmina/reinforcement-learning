@@ -35,7 +35,7 @@ class GridMuckEnvV2(gym.Env):
         Action.LEFT: NEIGHBORS[3]
     }
 
-    def __init__(self, size: int = 5, max_steps: int = 100, logging: bool = False, render_mode: str = None):
+    def __init__(self, size: int = 5, max_steps: int = 50, logging: bool = False, render_mode: str = None):
         super().__init__()
         
         self.render_mode = render_mode

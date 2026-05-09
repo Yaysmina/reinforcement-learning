@@ -133,7 +133,7 @@ class Visualization:
             self.screen.blit(msg_surf, msg_surf.get_rect(center=(grid_pixel_size // 2, grid_pixel_size // 2)))
 
         pygame.display.flip()
-        self.clock.tick(30)
+        self.clock.tick(60)
 
     def get_human_action(self):
         if not self.visible: return None
@@ -148,7 +148,7 @@ class Visualization:
                         return None
                     if event.key in KEY_TO_ACTION:
                         return KEY_TO_ACTION[event.key].value
-            self.clock.tick(30)
+            self.clock.tick(60)
         return None
 
     def close(self):
