@@ -19,7 +19,7 @@ class Agent:
         """
         Initializes the agent
         """
-        with open("version_3/hyper_parameters.yml", "r") as file:
+        with open("hyper_parameters.yml", "r") as file:
             all_hyper_parameters = yaml.safe_load(file)
             hyper_parameters = all_hyper_parameters[hyper_parameters_set]
 
@@ -41,7 +41,7 @@ class Agent:
         Runs the agent
         """
         # Initialize the environment
-        env = GridMuckEnvV2(size=11, render_mode="human" if render_freq > 0 else None, max_steps=50)
+        env = GridMuckEnvV2(size=7, render_mode="human" if render_freq > 0 else None, max_steps=50)
         obs, info = env.reset()
 
         # Initialize the model
