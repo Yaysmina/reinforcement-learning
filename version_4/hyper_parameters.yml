@@ -1,5 +1,5 @@
-version_2:
-  env_id: GridMuck-v2
+version_4:
+  env_id: GridMuck-v4
   replay_memory_size: 10000
   mini_batch_size: 32
   epsilon_init: 1.0

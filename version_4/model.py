@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from environment import GridMuckEnvV2
+from environment import GridMuckEnvV4
 import torch.nn.functional as F
 
 class DQN(nn.Module):
@@ -21,7 +21,7 @@ class DQN(nn.Module):
 
 if __name__ == "__main__":
     # Create an environment
-    env = GridMuckEnvV2(size=5)
+    env = GridMuckEnvV4(size=5)
 
     # Define model shape based on environment
     state_dim = env.observation_space.shape[0]

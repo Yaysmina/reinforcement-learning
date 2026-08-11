@@ -1,6 +1,6 @@
 import time
 import torch
-from environment import GridMuckEnvV2
+from environment import GridMuckEnvV4
 from model import DQN
 from experience_replay import ReplayMemory
 import itertools
@@ -15,7 +15,7 @@ class Agent:
     """
     Agent class
     """
-    def __init__(self, hyper_parameters_set: str = "version_2"):
+    def __init__(self, hyper_parameters_set: str = "version_4"):
         """
         Initializes the agent
         """
@@ -41,7 +41,7 @@ class Agent:
         Runs the agent
         """
         # Initialize the environment
-        env = GridMuckEnvV2(size=7, render_mode="human" if render_freq > 0 else None, max_steps=50)
+        env = GridMuckEnvV4(size=7, render_mode="human" if render_freq > 0 else None, max_steps=50)
         obs, info = env.reset()
 
         # Initialize the model
@@ -181,5 +181,5 @@ class Agent:
 
 
 if __name__ == "__main__":
-    agent = Agent("version_2")
+    agent = Agent("version_4")
     agent.run(is_training=True, render_freq=1000)

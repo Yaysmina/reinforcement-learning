@@ -16,9 +16,9 @@ class Action(IntEnum):
     LEFT = 3
     ATTACK = 4
 
-class GridMuckEnvV2(gym.Env):
+class GridMuckEnvV4(gym.Env):
     """
-    A single-class Gymnasium environment for GridMuck (Version 2).
+    A single-class Gymnasium environment for GridMuck (Version 4).
     Ready for Deep Q-Learning.
     """
     
@@ -75,7 +75,7 @@ class GridMuckEnvV2(gym.Env):
         # Stick is binary (0.0 or 1.0)
         norm_stick = 1.0 if self.has_stick else 0.0
         
-        # Normalize HP (Max HP in V2 is 2)
+        # Normalize HP (Max HP in V4 is 2)
         norm_agent_hp = max(0, self.agent_hp) / 2.0
         norm_zombie_hp = max(0, self.zombie_hp) / 2.0
         
