@@ -31,7 +31,7 @@ KEY_TO_ACTION = {
 }
 
 class Visualization:
-    def __init__(self, cell_size: int = 40):
+    def __init__(self, cell_size: int = 80):
         self.cell_size = cell_size
         self.visible = False
         self.running = True
@@ -121,6 +121,25 @@ class Visualization:
         y_ptr += 30
         step_txt = self.font_small.render(f"Steps: {env.current_step}/{env.max_steps}", True, COLOR_TEXT)
         self.screen.blit(step_txt, (info_x, y_ptr))
+
+        y_ptr += 30
+        # Section: Agent State (normalized observation)
+        hdr = self.font_med.render("AGENT STATE", True, COLOR_SECTION_HDR)
+        self.screen.blit(hdr, (info_x, y_ptr))
+        y_ptr += 30
+
+        obs = env._get_obs()
+        obs_labels = [
+            ("X pos", 0), ("Y pos", 1),
+            ("Zombie dX", 2), ("Zombie dY", 3),
+            ("Tree dX", 4), ("Tree dY", 5),
+            ("Agent HP", 6), ("Zombie HP", 7),
+            ("Has stick", 8),
+        ]
+        for label, idx in obs_labels:
+            txt = self.font_small.render(f"{label}: {obs[idx]:+.2f}", True, COLOR_TEXT)
+            self.screen.blit(txt, (info_x, y_ptr))
+            y_ptr += 20
 
         # --- Game Over Overlay ---
         if status_message:

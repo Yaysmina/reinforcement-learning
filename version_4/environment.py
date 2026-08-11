@@ -35,7 +35,7 @@ class GridMuckEnvV4(gym.Env):
         Action.LEFT: NEIGHBORS[3]
     }
 
-    def __init__(self, size: int = 5, max_steps: int = 50, logging: bool = False, render_mode: str = None):
+    def __init__(self, size: int = 7, max_steps: int = 100, logging: bool = False, render_mode: str = None):
         super().__init__()
         
         self.render_mode = render_mode
@@ -55,31 +55,49 @@ class GridMuckEnvV4(gym.Env):
         self.action_space = spaces.Discrete(5)
 
         # --- OBSERVATION SPACE ---
-        # 1D Vector of 5 normalized values: [agent_x, agent_y, has_stick, agent_hp, zombie_hp]
-        # All values will be floats between 0.0 and 1.0
-        self.observation_space = spaces.Box(
-            low=0.0, 
-            high=1.0, 
-            shape=(5,), 
-            dtype=np.float32
-        )
+        # 1D Vector of 9 normalized values:
+            # 0: Relative X position (-1.0 to 1.0)
+            # 1: Relative Y position (-1.0 to 1.0)
+            # 2: Relative X distance to Zombie (-1.0 to 1.0)
+            # 3: Relative Y distance to Zombie (-1.0 to 1.0)
+            # 4: Relative X distance to Tree (-1.0 to 1.0)
+            # 5: Relative Y distance to Tree (-1.0 to 1.0)
+            # 6: Normalized HP of Agent (0.0 to 1.0)
+            # 7: Normalized HP of Zombie (0.0 to 1.0)
+            # 8: Binary flag (0.0 or 1.0) indicating if the agent has a stick
+        low = np.array([-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 0.0, 0.0, 0], dtype=np.float32)
+        high = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1], dtype=np.float32)
+
+        self.observation_space = spaces.Box(low=low, high=high, shape=(9,), dtype=np.float32)
 
     def _get_obs(self) -> np.ndarray:
         """
         Converts the current game state into a normalized 1D vector for the Neural Network.
         """
-        # Normalize coordinates between 0 and 1
-        norm_x = self.agent_pos[0] / self.max_x
-        norm_y = self.agent_pos[1] / self.max_y
+        # Normalize Agent position between -1.0 and 1.0
+        norm_x = 2.0 * (self.agent_pos[0] / self.max_x) - 1.0
+        norm_y = 2.0 * (self.agent_pos[1] / self.max_y) - 1.0
         
-        # Stick is binary (0.0 or 1.0)
-        norm_stick = 1.0 if self.has_stick else 0.0
+        # Normalize distance to Zombie between -1.0 and 1.0
+        norm_zombie_dist_x = (self.agent_pos[0] - self.zombie_pos[0]) / self.max_x
+        norm_zombie_dist_y = (self.agent_pos[1] - self.zombie_pos[1]) / self.max_y
+        
+        # Normalize distance to Tree between -1.0 and 1.0
+        norm_tree_dist_x = (self.agent_pos[0] - self.tree_pos[0]) / self.max_x
+        norm_tree_dist_y = (self.agent_pos[1] - self.tree_pos[1]) / self.max_y
         
         # Normalize HP (Max HP in V4 is 2)
         norm_agent_hp = max(0, self.agent_hp) / 2.0
         norm_zombie_hp = max(0, self.zombie_hp) / 2.0
         
-        return np.array([norm_x, norm_y, norm_stick, norm_agent_hp, norm_zombie_hp], dtype=np.float32)
+        return np.array([
+            norm_x, norm_y,
+            norm_zombie_dist_x, norm_zombie_dist_y,
+            norm_tree_dist_x, norm_tree_dist_y,
+            norm_agent_hp,
+            norm_zombie_hp,
+            self.has_stick
+            ], dtype=np.float32)
 
     def _get_info(self) -> dict:
         """Returns standard game variables for debugging or logging."""
