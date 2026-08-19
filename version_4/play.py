@@ -3,7 +3,7 @@ from environment import GridMuckEnvV4
 from visualization import Visualization
 
 def play_game():
-    env = GridMuckEnvV4(size=9, max_steps=1000, logging=False)
+    env = GridMuckEnvV4(size=9, max_steps=100, logging=False)
     obs, info = env.reset()
     vis = Visualization(cell_size=80)
     vis.show()

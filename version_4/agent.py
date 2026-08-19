@@ -1,4 +1,5 @@
 import time
+import math
 import torch
 from environment import GridMuckEnvV4
 from model import DQN
@@ -27,7 +28,7 @@ class Agent:
         self.replay_memory_size = hyper_parameters["replay_memory_size"]
         self.mini_batch_size    = hyper_parameters["mini_batch_size"]
         self.epsilon_init       = hyper_parameters["epsilon_init"]
-        self.epsilon_decay      = hyper_parameters["epsilon_decay"]
+        self.decay_rate         = hyper_parameters["decay_rate"]
         self.epsilon_min        = hyper_parameters["epsilon_min"]
         self.learning_rate      = hyper_parameters["learning_rate"]
         self.discount_factor    = hyper_parameters["discount_factor"]
@@ -57,9 +58,6 @@ class Agent:
             # Initialize replay memory
             memory = ReplayMemory(self.replay_memory_size)
 
-            # Initialize epsilon
-            epsilon = self.epsilon_init
-
             # Initialize target network
             target_dqn = DQN(num_states, num_actions).to(device)
             target_dqn.load_state_dict(policy_dqn.state_dict())
@@ -71,8 +69,11 @@ class Agent:
             self.optimizer = torch.optim.Adam(policy_dqn.parameters(), lr=self.learning_rate)
 
         for episode in itertools.count():
+            # Check if this episode is a rendering/checkup episode
+            is_render_episode = (render_freq > 0 and episode % render_freq == 0)
+
             # Render every x episodes
-            if render_freq > 0 and episode % render_freq == 0:
+            if is_render_episode:
                 env.render_mode = "human"
             else:
                 env.render_mode = None
@@ -87,8 +88,8 @@ class Agent:
             # Play the game once
             while not (terminated or truncated):
                 
-                # Epsilon-greedy policy
-                if is_training and random.random() < epsilon:
+                # Take greedy action during checkups, otherwise epsilon-greedy during training
+                if is_training and not is_render_episode and random.random() < epsilon:
                     action = env.action_space.sample()
                     action = self._to_tensor_long(action)
                 else:
@@ -105,7 +106,6 @@ class Agent:
                 new_state = self._to_tensor_float(new_state)
                 reward = self._to_tensor_float(reward)
 
-
                 if is_training:
                     # Save experience in replay memory
                     memory.append((state, action, new_state, reward, terminated or truncated))
@@ -117,31 +117,33 @@ class Agent:
                 state = new_state
                 
                 if env.render_mode == "human":
-                    time.sleep(0.1)
+                    time.sleep(0.2)
 
             # Add reward to list
             rewards_per_episode.append(episode_reward)
 
-            # Update epsilon
-            epsilon = max(self.epsilon_min, epsilon * self.epsilon_decay)
-            epsilon_history.append(epsilon)
+            if is_training:
+                # Update epsilon using the decay formula:
+                # epsilon = 1 / sqrt(1 + decay_rate * current_episode)
+                epsilon = max(self.epsilon_min, 1.0 / math.sqrt(1.0 + self.decay_rate * episode))
+                epsilon_history.append(epsilon)
 
-            # If enough experience has been collected
-            if len(memory)>=self.mini_batch_size:
+                # If enough experience has been collected
+                if len(memory) >= self.mini_batch_size:
+                    # Sample from memory
+                    mini_batch = memory.sample(self.mini_batch_size)
 
-                # Sample from memory
-                mini_batch = memory.sample(self.mini_batch_size)
+                    self.optimize(mini_batch, policy_dqn, target_dqn)
 
-                self.optimize(mini_batch, policy_dqn, target_dqn)
-
-                # Copy policy network into target network
-                if step_counter > self.network_sync_rate:
-                    target_dqn.load_state_dict(policy_dqn.state_dict())
-                    step_counter = 0
+                    # Copy policy network into target network
+                    if step_counter > self.network_sync_rate:
+                        target_dqn.load_state_dict(policy_dqn.state_dict())
+                        step_counter = 0
 
             if episode % 100 == 0:
-                # Print average eposide reward over the last 100 episodes
-                print(f"Episode: {episode}, Reward: {round(np.mean(rewards_per_episode[-100:]), 2)}, Epsilon: {round(epsilon, 4)}")
+                # Print average episode reward over the last 100 episodes
+                current_eps = round(epsilon, 4) if is_training else 0.0
+                print(f"Episode: {episode}, Reward: {round(np.mean(rewards_per_episode[-100:]), 2)}, Epsilon: {current_eps}")
 
             if not is_training:
                 break
