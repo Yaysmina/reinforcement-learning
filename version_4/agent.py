@@ -71,6 +71,7 @@ class Agent:
         num_states = train_env.observation_space.shape[0]
         num_actions = train_env.action_space.n
         policy_dqn = DQN(num_states, num_actions).to(device)
+        print("Model is on device:", next(policy_dqn.parameters()).device)
 
         # Initialize replay memory
         memory = ReplayMemory(self.replay_memory_size)
@@ -139,7 +140,7 @@ class Agent:
                     step_counter = 0
 
             # Run the fixed-seed benchmark sweep at each evaluation milestone
-            if episode > 0 and episode % self.eval_freq == 0:
+            if episode > 0 and (episode < self.eval_freq and episode % (self.eval_freq // 10) == 0) or (episode % self.eval_freq == 0):
                 win_rate, mean_episode_length = self.evaluate(policy_dqn, eval_env)
                 self._log_benchmark_row(episode, win_rate, mean_episode_length, epsilon)
 
@@ -185,7 +186,7 @@ class Agent:
                     steps += 1
 
                     if eval_env.render_mode == "human":
-                        time.sleep(0.2)
+                        time.sleep(0.1)
 
                 episode_lengths.append(steps)
                 if eval_env.zombie_hp <= 0:

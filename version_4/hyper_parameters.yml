@@ -3,7 +3,7 @@ version_4:
   env_size: 9
   max_steps: 50
   experiment_name: baseline
-  seed: 1
+  seed: 3
   replay_memory_size: 10000
   mini_batch_size: 32
   epsilon_init: 1.0
