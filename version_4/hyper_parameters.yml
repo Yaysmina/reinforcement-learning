@@ -1,5 +1,9 @@
 version_4:
   env_id: GridMuck-v4
+  env_size: 9
+  max_steps: 50
+  experiment_name: baseline
+  seed: 1
   replay_memory_size: 10000
   mini_batch_size: 32
   epsilon_init: 1.0
@@ -8,3 +12,6 @@ version_4:
   network_sync_rate: 10
   learning_rate: 0.001
   discount_factor: 0.98
+  eval_seed_start: 1000
+  eval_episode_count: 100
+  eval_freq: 1000

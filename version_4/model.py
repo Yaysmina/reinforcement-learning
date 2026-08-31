@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*AVX2.*|.*avx2.*")
+
 import torch
 from torch import nn
 from environment import GridMuckEnvV4

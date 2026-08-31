@@ -5,7 +5,7 @@ from visualization import Visualization
 def play_game():
     env = GridMuckEnvV4(size=9, max_steps=100, logging=False)
     obs, info = env.reset()
-    vis = Visualization(cell_size=80)
+    vis = Visualization(cell_size=60)
     vis.show()
 
     total_reward = 0.0

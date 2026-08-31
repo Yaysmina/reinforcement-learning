@@ -2,7 +2,6 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 from enum import IntEnum
-import random
 
 class Entity(IntEnum):
     EMPTY = 0
@@ -125,16 +124,16 @@ class GridMuckEnvV4(gym.Env):
 
         # Pick two random and opposite quadrants
         quadrants = self._get_quadrant_outer_zones()
-        random_index = random.randint(0, 3)
+        random_index = int(self.np_random.integers(0, 4))
         quadrant_A = quadrants[random_index]
         quadrant_B = quadrants[(random_index + 2) % 4]
 
         # Place the tree randomly in quadrant_A
-        self.tree_pos = np.array([random.choice(quadrant_A)[0], random.choice(quadrant_A)[1]])
+        self.tree_pos = np.array([self.np_random.choice(quadrant_A)[0], self.np_random.choice(quadrant_A)[1]])
         self.grid[self.tree_pos[0], self.tree_pos[1]] = Entity.TREE
 
         # Place the zombie randomly in quadrant_B
-        self.zombie_pos = np.array([random.choice(quadrant_B)[0], random.choice(quadrant_B)[1]])
+        self.zombie_pos = np.array([self.np_random.choice(quadrant_B)[0], self.np_random.choice(quadrant_B)[1]])
         self.grid[self.zombie_pos[0], self.zombie_pos[1]] = Entity.ZOMBIE
         
         # Initialize the state variables
@@ -214,7 +213,7 @@ class GridMuckEnvV4(gym.Env):
 
         # Check if the target position is blocked
         if self.grid[target_x, target_y] != Entity.EMPTY:
-            target_x, target_y = self.agent_pos[0], self.agent_pos[1]
+            return
 
         # Move the agent
         self.grid[self.agent_pos[0], self.agent_pos[1]] = Entity.EMPTY  
@@ -231,21 +230,26 @@ class GridMuckEnvV4(gym.Env):
     def _run_game_logic(self):
         if self.zombie_hp > 0:
             # 1. Move towards the agent with 50% chance
-            if not self._is_next_to(Entity.ZOMBIE) and random.random() < 0.5:
+            if not self._is_next_to(Entity.ZOMBIE) and self.np_random.random() < 0.5:
                 dx = self.agent_pos[0] - self.zombie_pos[0]
                 dy = self.agent_pos[1] - self.zombie_pos[1]
 
+                target_x, target_y = self.zombie_pos[0], self.zombie_pos[1]
+
                 # Pick randomly if both are available, otherwise pick whichever isn't 0
-                use_x = random.choice([True, False]) if (dx and dy) else bool(dx)
-
-                self.grid[self.zombie_pos[0], self.zombie_pos[1]] = Entity.EMPTY
+                use_x = bool(self.np_random.choice([True, False])) if (dx and dy) else bool(dx)
                 if use_x:
-                    self.zombie_pos[0] += 1 if dx > 0 else -1
+                    target_x += 1 if dx > 0 else -1
                 else:
-                    self.zombie_pos[1] += 1 if dy > 0 else -1
-                self.grid[self.zombie_pos[0], self.zombie_pos[1]] = Entity.ZOMBIE
+                    target_y += 1 if dy > 0 else -1
 
-            # 2. If the zombie is next to the agent, it attacks
+                # Only move if the target cell is empty
+                if self.grid[target_x, target_y] == Entity.EMPTY:
+                    self.grid[self.zombie_pos[0], self.zombie_pos[1]] = Entity.EMPTY
+                    self.zombie_pos = np.array([target_x, target_y])
+                    self.grid[target_x, target_y] = Entity.ZOMBIE
+
+            # 2. If the zombie is next to the agent, it attacks (even if it just moved)
             if self._is_next_to(Entity.ZOMBIE):
                 self.agent_hp -= 1
                     
