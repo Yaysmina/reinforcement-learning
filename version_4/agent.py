@@ -2,6 +2,7 @@ import time
 import math
 import os
 import csv
+import sys
 import torch
 from environment import GridMuckEnvV4
 from model import DQN
@@ -13,14 +14,19 @@ from torch import nn
 import numpy as np
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+torch.set_num_threads(2)
 
 class Agent:
     """
     Agent class
     """
-    def __init__(self, hyper_parameters_set: str = "version_4"):
+    def __init__(self, seed: int, hyper_parameters_set: str = "version_4"):
         """
         Initializes the agent
+
+        Args:
+            seed: Random seed used for the training environment.
+            hyper_parameters_set: Name of the hyper parameter set to load.
         """
         with open("hyper_parameters.yml", "r") as file:
             all_hyper_parameters = yaml.safe_load(file)
@@ -32,7 +38,7 @@ class Agent:
 
         # Experiment parameters
         self.experiment_name = hyper_parameters["experiment_name"]
-        self.seed = hyper_parameters["seed"]
+        self.seed = seed
 
         # Hyper parameters
         self.replay_memory_size = hyper_parameters["replay_memory_size"]
@@ -40,7 +46,9 @@ class Agent:
         self.epsilon_init       = hyper_parameters["epsilon_init"]
         self.decay_rate         = hyper_parameters["decay_rate"]
         self.epsilon_min        = hyper_parameters["epsilon_min"]
-        self.learning_rate      = hyper_parameters["learning_rate"]
+        self.min_lr             = hyper_parameters["min_lr"]
+        self.initial_lr         = hyper_parameters["initial_lr"]
+        self.decay_episodes     = hyper_parameters["decay_episodes"]
         self.discount_factor    = hyper_parameters["discount_factor"]
 
         self.network_sync_rate  = hyper_parameters["network_sync_rate"]
@@ -51,6 +59,10 @@ class Agent:
         self.eval_seed_start   = hyper_parameters["eval_seed_start"]
         self.eval_episode_count = hyper_parameters["eval_episode_count"]
         self.eval_freq         = hyper_parameters["eval_freq"]
+        self.human_rendering   = hyper_parameters["human_rendering"]
+
+        # Keep track of best model (lower is better)
+        self.best_performance = float("inf")
 
     def run(self):
         """
@@ -84,7 +96,7 @@ class Agent:
         step_counter = 0
 
         # Policy network optimizer
-        self.optimizer = torch.optim.Adam(policy_dqn.parameters(), lr=self.learning_rate)
+        self.optimizer = torch.optim.Adam(policy_dqn.parameters(), lr=self.initial_lr)
 
         # Initialize the experiment-specific CSV log file
         self._init_csv_log()
@@ -127,6 +139,11 @@ class Agent:
             # Update epsilon using the decay formula
             epsilon = max(self.epsilon_min, 1.0 / math.sqrt(1.0 + self.decay_rate * episode))
 
+            # Update learning rate using linear decay
+            lr = max(self.min_lr, self.initial_lr - (episode / self.decay_episodes) * (self.initial_lr - self.min_lr))
+            for param_group in self.optimizer.param_groups:
+                param_group['lr'] = lr
+
             # If enough experience has been collected
             if len(memory) >= self.mini_batch_size:
                 # Sample from memory
@@ -144,6 +161,25 @@ class Agent:
                 win_rate, mean_episode_length = self.evaluate(policy_dqn, eval_env)
                 self._log_benchmark_row(episode, win_rate, mean_episode_length, epsilon)
 
+                # Keep track of best model (lower is better)
+                # Scored by derivation from optimal win rate and optimal mean episode length
+                score = 100 - (100*win_rate) + mean_episode_length - 12
+                if score < self.best_performance:
+                    self.best_performance = score
+                    print(f"New best performance! Score: {self.best_performance:.1f}. Saving model...")
+
+                    # Create the directory if it doesn't exist
+                    checkpoint_dir = os.path.join("checkpoints", self.experiment_name)
+                    os.makedirs(checkpoint_dir, exist_ok=True)
+
+                    # Define the save path
+                    save_path = os.path.join(checkpoint_dir, f"best_model_seed_{self.seed}.pt")
+                    
+                    # Save the model's state dictionary
+                    torch.save(policy_dqn.state_dict(), save_path)
+                    print(f"Model saved to {save_path}")
+
+
 
 
     def evaluate(self, policy_dqn, eval_env):
@@ -157,19 +193,21 @@ class Agent:
         # Put the model in evaluation mode and disable gradients
         policy_dqn.eval()
 
-        # Pick a random test run to display in human render mode
-        render_seed = random.randint(self.eval_seed_start, self.eval_seed_start + self.eval_episode_count - 1)
+        if self.human_rendering:
+            # Pick a random test run to display in human render mode
+            render_seed = random.randint(self.eval_seed_start, self.eval_seed_start + self.eval_episode_count - 1)
 
         wins = 0
         episode_lengths = []
 
         with torch.no_grad():
             for seed in range(self.eval_seed_start, self.eval_seed_start + self.eval_episode_count):
-                # Render this run in human mode so the agent's behavior is visible
-                if seed == render_seed:
-                    eval_env.render_mode = "human"
-                else:
-                    eval_env.render_mode = None
+                if self.human_rendering:
+                    # Render this run in human mode so the agent's behavior is visible
+                    if seed == render_seed:
+                        eval_env.render_mode = "human"
+                    else:
+                        eval_env.render_mode = None
 
                 state, _ = eval_env.reset(seed=seed)
                 state = self._to_tensor_float(state)
@@ -185,7 +223,7 @@ class Agent:
                     state = self._to_tensor_float(new_state)
                     steps += 1
 
-                    if eval_env.render_mode == "human":
+                    if self.human_rendering and eval_env.render_mode == "human":
                         time.sleep(0.1)
 
                 episode_lengths.append(steps)
@@ -265,5 +303,10 @@ class Agent:
 
 
 if __name__ == "__main__":
-    agent = Agent("version_4")
+    if len(sys.argv) != 2:
+        print("Usage: python3 agent.py <seed>")
+        sys.exit(1)
+
+    seed = int(sys.argv[1])
+    agent = Agent(seed, "version_4")
     agent.run()

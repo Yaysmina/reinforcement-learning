@@ -255,7 +255,7 @@ class GridMuckEnvV4(gym.Env):
                     
 
     def _get_reward(self) -> float:
-        time_penalty = -0.1
+        time_penalty = -0.3
         agent_dies_reward = -10.0 if self.agent_hp <= 0 else 0.0
         zombie_dies_reward = 10.0 if self.zombie_hp <= 0 else 0.0
 

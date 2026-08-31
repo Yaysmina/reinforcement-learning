@@ -2,7 +2,7 @@ import pygame
 from environment import GridMuckEnvV4, Entity, Action
 
 # Color constants
-COLOR_EMPTY = (240, 240, 240)      
+COLOR_EMPTY = (34, 139, 34)    
 COLOR_TREE = (34, 139, 34)         
 COLOR_AGENT = (30, 144, 255)       
 COLOR_ZOMBIE = (178, 34, 34)       
@@ -78,10 +78,12 @@ class Visualization:
                 pygame.draw.rect(self.screen, ENTITY_COLORS.get(entity, COLOR_EMPTY), rect)
                 pygame.draw.rect(self.screen, COLOR_GRID_LINE, rect, 1)
                 
-                if entity != Entity.EMPTY:
-                    label = {Entity.TREE: "T", Entity.AGENT: "A", Entity.ZOMBIE: "Z"}[entity]
-                    text_surf = self.font_large.render(label, True, COLOR_TEXT)
-                    self.screen.blit(text_surf, text_surf.get_rect(center=rect.center))
+                if entity == Entity.TREE:
+                    self._draw_tree(rect)
+                elif entity == Entity.AGENT:
+                    self._draw_face(rect, (30, 144, 255))
+                elif entity == Entity.ZOMBIE:
+                    self._draw_face(rect, (178, 34, 34))
 
         # --- Info Panel ---
         info_x = grid_pixel_size + 15
@@ -153,6 +155,52 @@ class Visualization:
 
         pygame.display.flip()
         self.clock.tick(60)
+
+    def _draw_tree(self, rect: pygame.Rect) -> None:
+        """Draw a stylized tree (trunk + foliage) inside the given cell rect."""
+        cx = rect.centerx
+        base_y = rect.bottom - 4
+
+        # Trunk (brown)
+        trunk_w = max(6, int(self.cell_size * 0.16))
+        trunk_h = int(self.cell_size * 0.30)
+        trunk_rect = pygame.Rect(0, 0, trunk_w, trunk_h)
+        trunk_rect.midbottom = (cx, base_y)
+        pygame.draw.rect(self.screen, (101, 67, 33), trunk_rect)
+
+        # Foliage (three overlapping circles, dark green)
+        foliage_color = (0, 102, 0)
+        r = int(self.cell_size * 0.22)
+        foliage_centers = [
+            (cx, base_y - trunk_h - r),
+            (cx - r, base_y - trunk_h - int(r * 0.6)),
+            (cx + r, base_y - trunk_h - int(r * 0.6)),
+        ]
+        for fc in foliage_centers:
+            pygame.draw.circle(self.screen, foliage_color, fc, r)
+
+    def _draw_face(self, rect: pygame.Rect, face_color) -> None:
+        """Draw a face (colored circle with black eyes and mouth) in the cell."""
+        cx = rect.centerx
+        cy = rect.centery
+        r = int(self.cell_size * 0.38)
+
+        # Face
+        pygame.draw.circle(self.screen, face_color, (cx, cy), r)
+
+        # Eyes (black)
+        eye_r = max(2, int(self.cell_size * 0.06))
+        eye_dx = int(self.cell_size * 0.12)
+        eye_y = cy - int(self.cell_size * 0.10)
+        pygame.draw.circle(self.screen, (0, 0, 0), (cx - eye_dx, eye_y), eye_r)
+        pygame.draw.circle(self.screen, (0, 0, 0), (cx + eye_dx, eye_y), eye_r)
+
+        # Mouth (black)
+        mouth_w = int(self.cell_size * 0.30)
+        mouth_h = int(self.cell_size * 0.10)
+        mouth_rect = pygame.Rect(0, 0, mouth_w, mouth_h)
+        mouth_rect.center = (cx, cy + int(self.cell_size * 0.18))
+        pygame.draw.rect(self.screen, (0, 0, 0), mouth_rect, border_radius=int(mouth_h / 2))
 
     def get_human_action(self):
         if not self.visible: return None
