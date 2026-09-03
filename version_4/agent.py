@@ -224,7 +224,7 @@ class Agent:
                     steps += 1
 
                     if self.human_rendering and eval_env.render_mode == "human":
-                        time.sleep(0.1)
+                        time.sleep(0.2)
 
                 episode_lengths.append(steps)
                 if eval_env.zombie_hp <= 0:
